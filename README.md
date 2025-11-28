@@ -12,7 +12,7 @@ Web后台管理节点，订阅 Base64 自动带备注。
 
 ## 部署
 ```bash
-git clone https://github.com/你的用户名/node_sub_manager.git
+git clone https://github.com/999k923/node_sub_manager.git
 cd node_sub_manager
 chmod +x deploy.sh
 ./deploy.sh
