@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>节点管理</title>
+</head>
+<body>
+<h2>节点列表</h2>
+<table border="1">
+    <tr><th>ID</th><th>备注</th><th>节点链接</th><th>状态</th><th>操作</th></tr>
+    {% for n in nodes %}
+    <tr>
+        <td>{{ n.id }}</td>
+        <td>{{ n.name }}</td>
+        <td style="word-break:break-all">{{ n.link }}</td>
+        <td>{{ "启用" if n.enabled else "禁用" }}</td>
+        <td>
+            <a href="/toggle/{{n.id}}">切换</a> | 
+            <a href="/delete/{{n.id}}">删除</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h2>添加节点</h2>
+<form action="/add" method="post">
+    备注: <input name="name" size="30"><br>
+    节点链接: <input name="link" size="100"><br>
+    <button type="submit">添加</button>
+</form>
+
+<p>订阅地址: <a href="/sub">/sub</a></p>
+</body>
+</html>
