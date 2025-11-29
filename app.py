@@ -16,6 +16,8 @@ DB_PATH = os.path.join(INSTANCE_DIR, 'nodes.db')
 
 # 创建 instance 文件夹
 os.makedirs(INSTANCE_DIR, exist_ok=True)
+# 确保 instance 目录可写
+os.chmod(INSTANCE_DIR, 0o775)
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
@@ -52,6 +54,7 @@ def get_token():
         token = generate_token()
         with open(TOKEN_FILE, 'w') as f:
             f.write(token)
+        os.chmod(TOKEN_FILE, 0o600)  # 文件安全权限
         return token
 
 # -------------------------
@@ -59,6 +62,9 @@ def get_token():
 # -------------------------
 with app.app_context():
     db.create_all()
+    # 确保数据库文件可写
+    if os.path.exists(DB_PATH):
+        os.chmod(DB_PATH, 0o664)
 
 # -------------------------
 # 路由
@@ -69,27 +75,35 @@ def index():
         nodes = Node.query.all()
     except Exception as e:
         return f"数据库错误: {e}", 500
-    return render_template('index.html', nodes=nodes)
+    return render_template('index.html', nodes=nodes, token=get_token())
 
 @app.route('/add', methods=['POST'])
 def add_node():
-    data = request.form
-    node = Node(
-        name=data.get('name'),
-        protocol=data.get('protocol'),
-        address=data.get('address'),
-        port=int(data.get('port')),
-        remark=data.get('remark', '')
-    )
-    db.session.add(node)
-    db.session.commit()
+    try:
+        data = request.form
+        node = Node(
+            name=data.get('name'),
+            protocol=data.get('protocol'),
+            address=data.get('address'),
+            port=int(data.get('port', 0)),
+            remark=data.get('remark', '')
+        )
+        db.session.add(node)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return f"添加节点失败: {e}", 500
     return redirect(url_for('index'))
 
 @app.route('/delete/<int:node_id>', methods=['POST'])
 def delete_node(node_id):
-    node = Node.query.get_or_404(node_id)
-    db.session.delete(node)
-    db.session.commit()
+    try:
+        node = Node.query.get_or_404(node_id)
+        db.session.delete(node)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return f"删除节点失败: {e}", 500
     return redirect(url_for('index'))
 
 @app.route('/sub')
@@ -98,10 +112,13 @@ def get_sub():
     if token != get_token():
         abort(403, description="访问订阅需要正确的 token")
     
-    nodes = Node.query.all()
+    try:
+        nodes = Node.query.all()
+    except Exception as e:
+        return f"读取订阅失败: {e}", 500
+
     result = ""
     for node in nodes:
-        # 简单示例输出，可根据协议格式调整
         result += f"{node.protocol}://{node.address}:{node.port}#{node.remark}\n"
     return result, 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
