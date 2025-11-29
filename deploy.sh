@@ -33,6 +33,14 @@ sudo systemctl daemon-reload
 sudo systemctl start node_sub
 sudo systemctl enable node_sub
 
-echo "部署完成！"
-echo "访问后台: http://服务器IP:5786/"
-echo "订阅地址: http://服务器IP:5786/sub"
+# 提示 token
+TOKEN_FILE="instance/token.txt"
+if [ -f "$TOKEN_FILE" ]; then
+    TOKEN=$(cat "$TOKEN_FILE")
+    echo "部署完成！"
+    echo "访问后台: http://服务器IP:5786/"
+    echo "订阅地址: http://服务器IP:5786/sub?token=$TOKEN"
+    echo "请妥善保管 token，避免被他人抓取"
+else
+    echo "部署完成，但未找到 token 文件！"
+fi
