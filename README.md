@@ -113,3 +113,5 @@ echo "abc123xyz" > /opt/stacks/node/access_token.txt
 ```bash
 docker restart node_sub_manager
 ```
+
+还是那句话还有其他问题问AI可以解决，或者用上面的一键部署不会有报
