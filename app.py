@@ -6,6 +6,7 @@ import re
 from update_node_name import update_nodes  # 安全导入，无循环依赖
 import string
 import random
+from functools import wraps
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///nodes.db'
@@ -38,9 +39,34 @@ def get_token():
         return token
 
 # ---------------------------
+# Web 后台用户名密码
+# ---------------------------
+WEB_USER = "admin"   # 手动填写用户名
+WEB_PASS = "123456"  # 手动填写密码
+
+def check_auth(username, password):
+    return username == WEB_USER and password == WEB_PASS
+
+def authenticate():
+    return Response(
+        '认证失败，请输入正确用户名和密码', 401,
+        {'WWW-Authenticate': 'Basic realm="Login Required"'}
+    )
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
+
+# ---------------------------
 # Web管理后台
 # ---------------------------
 @app.route("/")
+@requires_auth
 def index():
     nodes = Node.query.all()
     token = get_token()  # 可选：在网页显示 token
@@ -48,6 +74,7 @@ def index():
 
 
 @app.route("/add", methods=["POST"])
+@requires_auth
 def add_node():
     name = request.form.get("name", "").strip()
     link = request.form.get("link", "").strip()
@@ -72,6 +99,7 @@ def add_node():
 
 
 @app.route("/delete/<int:node_id>")
+@requires_auth
 def delete_node(node_id):
     node = Node.query.get(node_id)
     if node:
@@ -91,6 +119,7 @@ def delete_node(node_id):
 
 
 @app.route("/toggle/<int:node_id>")
+@requires_auth
 def toggle_node(node_id):
     node = Node.query.get(node_id)
     if node:
@@ -110,6 +139,7 @@ def toggle_node(node_id):
 
 
 @app.route("/edit/<int:node_id>", methods=["POST"])
+@requires_auth
 def edit_node(node_id):
     node = Node.query.get(node_id)
     if node:
