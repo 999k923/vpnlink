@@ -20,41 +20,6 @@ Web后台新增，修改，删除节点。
 ```bash
 git clone https://github.com/999k923/node_sub_manager.git && cd node_sub_manager && chmod +x deploy.sh run.sh stop.sh && ./deploy.sh
 ```
-
-## docker compose部署  docker部署有报错，问AI 可以解决，或者用上面的一键部署不会有报错。
-```bash
-services:
-  node_sub_manager:
-    image: 999k923/node_sub_manager:latest
-    container_name: node_sub_manager
-    restart: always
-
-    ports:
-      - "5786:5786"
-
-    volumes:
-      - ./nodes.db:/app/nodes.db
-      - ./access_token.txt:/app/access_token.txt
-      - ./logs:/app/logs
-
-    environment:
-      - FLASK_RUN_HOST=0.0.0.0
-      - FLASK_RUN_PORT=5786
-```
-如果报错shh界面运行下面代码：
-```bash
-rm -rf /opt/stacks/node/access_token.txt
-```
-```bash
-touch /opt/stacks/node/access_token.txt
-```
-```bash
-docker exec -it node_sub_manager /bin/bash
-```
-```bash
-python3 db_init.py
-```
-
 ## 注意## 注意
 默认监听ipv4，如果是ipv6 only vps,需要把部署文件里面的监听改成监听ipv6后重启
 ```bash
@@ -95,4 +60,56 @@ bash run.sh
 # 查看日志
 ```bash
 journalctl -u node_sub -f
+```
+
+## docker compose部署  docker部署有报错，问AI 可以解决，或者用上面的一键部署不会有报错。
+```bash
+services:
+  node_sub_manager:
+    image: 999k923/node_sub_manager:latest
+    container_name: node_sub_manager
+    restart: always
+
+    ports:
+      - "5786:5786"
+
+    volumes:
+      - ./nodes.db:/app/nodes.db
+      - ./access_token.txt:/app/access_token.txt
+      - ./logs:/app/logs
+
+    environment:
+      - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_RUN_PORT=5786
+```
+如果报错shh界面运行下面代码：
+```bash
+rm -rf /opt/stacks/node/access_token.txt
+```
+```bash
+touch /opt/stacks/node/access_token.txt
+```
+```bash
+docker exec -it node_sub_manager /bin/bash
+```
+```bash
+python3 db_init.py
+```
+
+docker部署后获取不到订阅检查订阅tocken有没有正确生成，
+```bash
+docker exec -it node_sub_manager cat /app/access_token.txt
+```
+获取不到token，手动写入
+1. 删除旧 token 文件
+```bash
+rm -f /opt/stacks/node/access_token.txt
+```
+3. 写入新的 token
+```bash
+echo "abc123xyz" > /opt/stacks/node/access_token.txt
+```
+5. 重启服务
+```bash
+docker restart node_sub_manager
 ```
