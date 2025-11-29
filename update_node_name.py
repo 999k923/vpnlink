@@ -1,9 +1,17 @@
 # update_node_name.py
-from app import app, db
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 from models import Node
 import base64
 import json
 import re
+import os
+
+# 独立 Flask app 用于数据库访问
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///nodes.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
 def update_nodes():
     """
@@ -22,7 +30,7 @@ def update_nodes():
                     raw = link[8:]
                     decoded = base64.b64decode(raw + "==").decode()
                     j = json.loads(decoded)
-                    j["ps"] = n.name
+                    j["ps"] = n.name  # 覆盖或添加 ps
                     new_raw = base64.b64encode(json.dumps(j).encode()).decode()
                     n.link = "vmess://" + new_raw
                     updated_count += 1
@@ -33,7 +41,7 @@ def update_nodes():
             elif link.startswith("vless://"):
                 try:
                     clean = re.sub(r"#.*$", "", link)
-                    n.link = f"{clean}#{n.name}"
+                    n.link = f"{clean}#{n.name}"  # 覆盖或添加备注
                     updated_count += 1
                 except Exception as e:
                     print(f"VLESS 更新失败 id={n.id}：{e}")
