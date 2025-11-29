@@ -33,8 +33,6 @@ sudo systemctl daemon-reload
 sudo systemctl start node_sub
 sudo systemctl enable node_sub
 
-# 显示 token
-TOKEN=$(python3 -c "from app import get_token; print(get_token())")
 echo "部署完成！"
 echo "访问后台: http://服务器IP:5786/"
-echo "订阅地址访问时需要使用 token: $TOKEN"
+echo "订阅地址: http://服务器IP:5786/sub"
