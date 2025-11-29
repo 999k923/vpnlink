@@ -21,7 +21,7 @@ Web后台新增，修改，删除节点。
 git clone https://github.com/999k923/node_sub_manager.git && cd node_sub_manager && chmod +x deploy.sh run.sh stop.sh && ./deploy.sh
 ```
 ## 注意
-默认监听ipv4，如果是ipv6only vps需要改成监听ipv6后重启
+默认监听ipv4，如果是ipv6 only vps,需要把部署文件里面的监听改成监听ipv6后重启
 ```bash
 nano app.py
 ```
