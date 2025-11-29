@@ -1,46 +1,46 @@
+# update_node_name.py
 from app import app, db
 from models import Node
 import base64
 import json
 import re
 
-with app.app_context():
-    nodes = Node.query.all()
-    updated_count = 0
+def update_nodes():
+    """
+    批量更新数据库里 VMESS 和 VLESS 节点的备注
+    """
+    with app.app_context():
+        nodes = Node.query.all()
+        updated_count = 0
 
-    for n in nodes:
-        link = n.link.strip()
-        original_link = link
+        for n in nodes:
+            link = n.link.strip()
 
-        # VMESS 节点
-        if link.startswith("vmess://"):
-            try:
-                raw = link[8:]
-                decoded = base64.b64decode(raw + "==").decode()
-                j = json.loads(decoded)
-                # 覆盖或添加 ps
-                j["ps"] = n.name
-                new_raw = base64.b64encode(json.dumps(j).encode()).decode()
-                n.link = "vmess://" + new_raw
-                updated_count += 1
-            except Exception as e:
-                print(f"VMESS 节点更新失败 id={n.id}：{e}")
+            # VMESS 节点
+            if link.startswith("vmess://"):
+                try:
+                    raw = link[8:]
+                    decoded = base64.b64decode(raw + "==").decode()
+                    j = json.loads(decoded)
+                    j["ps"] = n.name  # 覆盖或添加 ps
+                    new_raw = base64.b64encode(json.dumps(j).encode()).decode()
+                    n.link = "vmess://" + new_raw
+                    updated_count += 1
+                except Exception as e:
+                    print(f"VMESS 更新失败 id={n.id}：{e}")
 
-        # VLESS 节点
-        elif link.startswith("vless://"):
-            try:
-                # 移除原 #备注，添加后台 name
-                clean = re.sub(r"#.*$", "", link)
-                n.link = f"{clean}#{n.name}"
-                updated_count += 1
-            except Exception as e:
-                print(f"VLESS 节点更新失败 id={n.id}：{e}")
+            # VLESS 节点
+            elif link.startswith("vless://"):
+                try:
+                    clean = re.sub(r"#.*$", "", link)
+                    n.link = f"{clean}#{n.name}"  # 覆盖或添加备注
+                    updated_count += 1
+                except Exception as e:
+                    print(f"VLESS 更新失败 id={n.id}：{e}")
 
-        # 其它协议，可选覆盖
-        else:
-            # 如果想覆盖 #备注，也可以打开下面一行
-            # n.link = re.sub(r"#.*$", "", link) + f"#{n.name}"
-            pass
+            # 其它协议节点，可按需处理
+            else:
+                pass
 
-    db.session.commit()
-    print(f"✅ 批量更新完成，总共更新 {updated_count} 个节点")
+        db.session.commit()
+        print(f"✅ 更新完成，总共 {updated_count} 个节点")
