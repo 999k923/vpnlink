@@ -16,24 +16,24 @@ def update_nodes():
         for n in nodes:
             link = n.link.strip()
 
-            # VMESS 节点
+            # VMESS
             if link.startswith("vmess://"):
                 try:
                     raw = link[8:]
                     decoded = base64.b64decode(raw + "==").decode()
                     j = json.loads(decoded)
-                    j["ps"] = n.name  # 覆盖或添加 ps
+                    j["ps"] = n.name
                     new_raw = base64.b64encode(json.dumps(j).encode()).decode()
                     n.link = "vmess://" + new_raw
                     updated_count += 1
                 except Exception as e:
                     print(f"VMESS 更新失败 id={n.id}：{e}")
 
-            # VLESS 节点
+            # VLESS
             elif link.startswith("vless://"):
                 try:
                     clean = re.sub(r"#.*$", "", link)
-                    n.link = f"{clean}#{n.name}"  # 覆盖或添加备注
+                    n.link = f"{clean}#{n.name}"
                     updated_count += 1
                 except Exception as e:
                     print(f"VLESS 更新失败 id={n.id}：{e}")
