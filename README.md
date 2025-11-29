@@ -24,7 +24,7 @@ nano app.py
 最后一行里面的app.run(host="0.0.0.0", port=5786)改成 app.run(host="::", port=5786)
 
 访问后台：`http://服务器IP:5786/`  
-订阅地址：`http://您的IP:5786/sub?token=TOKEN`
+订阅地址：`http://您的IP:5786/sub?token=“TOKEN”`
 
 token安装时候随机生成，并记录在access_token.txt，或者忘记token了，可以重新运行run.sh 再次显示token
 
