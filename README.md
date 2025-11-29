@@ -14,6 +14,11 @@ Web后台管理节点，订阅 Base64 自动带备注。
 ```bash
 git clone https://github.com/999k923/node_sub_manager.git && cd node_sub_manager && chmod +x deploy.sh run.sh stop.sh && ./deploy.sh
 ```
+## 注意
+默认监听ipv4，如果是ipv6only vps需要改成监听ipv6
+```bash
+nano app.py
+```
 访问后台：`http://服务器IP:5786/`  
 订阅地址：`http://服务器IP:5786/sub`
 
