@@ -4,6 +4,9 @@
 轻量级节点管理系统，支持 TUIC/VLESS/VMess/Trojan/hy2等等节点统一管理方便域名订阅。
 Web后台新增，修改，删除节点。
 
+访问后台：`http://服务器IP:5786/`  
+订阅地址：`http://您的IP:5786/sub?token=“TOKEN”`
+
 <img width="1012" height="680" alt="image" src="https://github.com/user-attachments/assets/48df43a8-beb6-4af2-9eac-78d828a51d29" />
 
 
