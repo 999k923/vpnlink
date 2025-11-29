@@ -16,7 +16,7 @@ Web后台新增，修改，删除节点。
 - 方便不同设备获取订阅后节点备名称会显示在客户端节点备注里面
 - Ubuntu 一键部署
 
-## 部署
+## 一键部署
 ```bash
 git clone https://github.com/999k923/node_sub_manager.git && cd node_sub_manager && chmod +x deploy.sh run.sh stop.sh && ./deploy.sh
 ```
