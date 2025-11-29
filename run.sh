@@ -1,36 +1,18 @@
 #!/bin/bash
-# run.sh - 启动 Node Subscription Manager 后台服务，并启用 systemd 开机自启
+# 省略前面安装和依赖部分
 
-APP_DIR="/root/node_sub_manager"
-APP_FILE="app.py"
-PID_FILE="$APP_DIR/node_sub.pid"
-SERVICE_FILE="/etc/systemd/system/node_sub.service"
+# 启动服务
+sudo systemctl daemon-reload
+sudo systemctl start node_sub
+sudo systemctl enable node_sub
 
-# 检查 systemd 服务文件，如果不存在就创建
-if [ ! -f "$SERVICE_FILE" ]; then
-    echo "创建 systemd 服务文件..."
-    cat <<EOF > $SERVICE_FILE
-[Unit]
-Description=Node Subscription Manager
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=$APP_DIR
-ExecStart=/usr/bin/python3 $APP_DIR/$APP_FILE
-Restart=always
-RestartSec=5
-Environment=PYTHONUNBUFFERED=1
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-    systemctl daemon-reload
-    systemctl enable node_sub
+# 显示 token
+if [ -f "instance/token.txt" ]; then
+    TOKEN=$(cat instance/token.txt)
+    echo "部署完成！"
+    echo "访问后台: http://服务器IP:5786/"
+    echo "订阅地址: http://服务器IP:5786/sub?token=$TOKEN"
+    echo "请妥善保管 token，避免被他人抓取"
+else
+    echo "部署完成，但未找到 token 文件！"
 fi
-
-# 启动 systemd 服务
-systemctl start node_sub
-echo "服务已启动并设置开机自启"
