@@ -1,16 +1,15 @@
 # Node Subscription Manager
 多个代理/节点集中起来，通过一个域名提供统一订阅，客户端更新订阅就能获取所有节点
 轻量级节点管理系统，支持 TUIC/VLESS/VMess/Trojan/hy2等等节点统一订阅。
-Web后台管理节点，订阅 Base64 自动带备注。
+Web后台管理节点。
 <img width="789" height="501" alt="image" src="https://github.com/user-attachments/assets/2dfd731a-ec3e-470e-a7e9-3594190f0d69" />
 
 <img width="619" height="507" alt="image" src="https://github.com/user-attachments/assets/7e817de0-7d37-481f-a21a-cf2cf9435692" />
 
 
 ## 功能
-- Web后台增删改节点
-- 获取订阅后节点备名称会显示在客户端节点备注里面
-- 动态生成 Base64 订阅
+- Web后台增删改节点。
+- 方便不同设备获取订阅后节点备名称会显示在客户端节点备注里面
 - Ubuntu 一键部署
 
 ## 部署
