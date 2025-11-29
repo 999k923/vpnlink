@@ -2,24 +2,18 @@ from flask import Flask, Response, render_template, request, redirect, url_for
 from models import db, Node
 import base64
 import os
+import re
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///nodes.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# 初始化数据库
 db.init_app(app)
 
-# >>> 自动创建数据库（非常关键）
 with app.app_context():
     if not os.path.exists("nodes.db"):
         db.create_all()
-        print(">>> 数据库已初始化 nodes.db")
 
 
-# ---------------------------
-# Web管理后台
-# ---------------------------
 @app.route("/")
 def index():
     nodes = Node.query.all()
@@ -30,6 +24,9 @@ def index():
 def add_node():
     name = request.form.get("name", "").strip()
     link = request.form.get("link", "").strip()
+
+    # 去掉 link 中自带的 #备注
+    link = re.sub(r"#.*$", "", link)
 
     if name and link:
         node = Node(name=name, link=link)
@@ -57,13 +54,15 @@ def toggle_node(node_id):
     return redirect(url_for("index"))
 
 
-# ---------------------------
-# 动态订阅生成
-# ---------------------------
 @app.route("/sub")
 def sub():
     nodes = Node.query.filter_by(enabled=True).all()
-    links = [f"{n.link}#{n.name}" for n in nodes]
+    links = []
+
+    for n in nodes:
+        # 生成订阅：link + #后台备注
+        links.append(f"{n.link}#{n.name}")
+
     sub_content = "\n".join(links)
 
     sub_base64 = base64.b64encode(sub_content.encode()).decode()
@@ -72,4 +71,4 @@ def sub():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5786)
+    app.run(host="::", port=5786)
