@@ -4,11 +4,22 @@ import base64
 import os
 import re
 import json
+import secrets
 
 # ---------------------------
-# 配置安全访问 token
+# 随机生成访问 token，如果 token.txt 存在则读取
 # ---------------------------
-ACCESS_TOKEN = "你的随机字符串"  # 必须替换成自己的随机 token
+TOKEN_FILE = "instance/token.txt"
+if not os.path.exists("instance"):
+    os.makedirs("instance")
+
+if os.path.exists(TOKEN_FILE):
+    with open(TOKEN_FILE, "r") as f:
+        ACCESS_TOKEN = f.read().strip()
+else:
+    ACCESS_TOKEN = secrets.token_urlsafe(16)  # 生成随机 token
+    with open(TOKEN_FILE, "w") as f:
+        f.write(ACCESS_TOKEN)
 
 # ---------------------------
 app = Flask(__name__)
@@ -16,11 +27,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/nodes.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
-# 初始化数据库
 with app.app_context():
     if not os.path.exists("instance/nodes.db"):
         db.create_all()
-
 
 # ---------------------------
 # Web 管理后台
@@ -35,17 +44,13 @@ def index():
 def add_node():
     name = request.form.get("name", "").strip()
     link = request.form.get("link", "").strip()
-    # 去掉 link 中自带的 #备注
     link = re.sub(r"#.*$", "", link)
 
     if name and link:
         node = Node(name=name, link=link)
         db.session.add(node)
         db.session.commit()
-
-        # 自动更新备注覆盖
         update_node_name(node)
-
     return redirect(url_for("index"))
 
 
@@ -72,7 +77,6 @@ def toggle_node(node_id):
 # ---------------------------
 @app.route("/sub")
 def sub():
-    # 验证 token
     token = request.args.get("token", "")
     if token != ACCESS_TOKEN:
         return "Forbidden", 403
@@ -89,18 +93,15 @@ def sub():
                 raw = link[8:]
                 decoded = base64.b64decode(raw + "==").decode()
                 j = json.loads(decoded)
-                # 用后台备注覆盖 ps 字段
                 j["ps"] = n.name
                 new_raw = base64.b64encode(json.dumps(j).encode()).decode()
                 out_links.append("vmess://" + new_raw)
             except:
                 out_links.append(link)
-                continue
         # VLESS 节点
         elif link.startswith("vless://"):
             clean = re.sub(r"#.*$", "", link)
             out_links.append(f"{clean}#{n.name}")
-        # 其它协议
         else:
             clean = re.sub(r"#.*$", "", link)
             out_links.append(f"{clean}#{n.name}")
@@ -111,11 +112,10 @@ def sub():
 
 
 # ---------------------------
-# 自动更新单条节点备注函数
+# 自动更新节点备注
 # ---------------------------
 def update_node_name(node):
     link = node.link.strip()
-    # VMESS 节点
     if link.startswith("vmess://"):
         try:
             raw = link[8:]
@@ -127,7 +127,6 @@ def update_node_name(node):
             db.session.commit()
         except:
             pass
-    # VLESS 节点也可以覆盖
     elif link.startswith("vless://"):
         clean = re.sub(r"#.*$", "", link)
         node.link = f"{clean}#{node.name}"
@@ -136,4 +135,5 @@ def update_node_name(node):
 
 # ---------------------------
 if __name__ == "__main__":
+    print(f"访问订阅链接时需要使用 token: {ACCESS_TOKEN}")
     app.run(host="::", port=5786)
