@@ -57,17 +57,41 @@ def toggle_node(node_id):
 @app.route("/sub")
 def sub():
     nodes = Node.query.filter_by(enabled=True).all()
-    links = []
+    out_links = []
 
     for n in nodes:
-        # 生成订阅：link + #后台备注
-        links.append(f"{n.link}#{n.name}")
+        link = n.link.strip()
 
-    sub_content = "\n".join(links)
+        # VMESS 节点：vmess://base64_json
+        if link.startswith("vmess://"):
+            try:
+                import json
+                raw = link[8:]
+                decoded = base64.b64decode(raw + "==").decode()
+                j = json.loads(decoded)
 
-    sub_base64 = base64.b64encode(sub_content.encode()).decode()
+                # 用后台备注覆盖 VMESS 的 ps 字段
+                j["ps"] = n.name
 
-    return Response(sub_base64, mimetype="text/plain")
+                # 重新 Base64 编码
+                new_raw = base64.b64encode(json.dumps(j).encode()).decode()
+                out_links.append("vmess://" + new_raw)
+
+            except Exception as e:
+                out_links.append(link)
+                continue
+
+        else:
+            # 其它协议(VLESS/SS/Trojan...)，清理旧 #备注
+            import re
+            clean = re.sub(r"#.*$", "", link)
+            out_links.append(f"{clean}#{n.name}")
+
+    sub_content = "\n".join(out_links)
+    sub_b64 = base64.b64encode(sub_content.encode()).decode()
+
+    return Response(sub_b64, mimetype="text/plain")
+
 
 
 if __name__ == "__main__":
