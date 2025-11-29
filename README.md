@@ -12,10 +12,25 @@ Web后台管理节点，订阅 Base64 自动带备注。
 
 ## 部署
 ```bash
-git clone https://github.com/999k923/node_sub_manager.git
-cd node_sub_manager
-chmod +x deploy.sh
-./deploy.sh
+git clone https://github.com/999k923/node_sub_manager.git && cd node_sub_manager && chmod +x deploy.sh run.sh stop.sh && ./deploy.sh
 ```
 访问后台：`http://服务器IP:5786/`  
 订阅地址：`http://服务器IP:5786/sub`
+
+重启命令：
+```bash
+systemctl restart node_sub
+```
+停止：
+```bash
+bash stop.sh
+```
+启动：
+```bash
+bash run.sh
+```
+
+# 查看日志
+```bash
+journalctl -u node_sub -f
+```
