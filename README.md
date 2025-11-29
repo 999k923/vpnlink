@@ -20,7 +20,35 @@ Web后台新增，修改，删除节点。
 ```bash
 git clone https://github.com/999k923/node_sub_manager.git && cd node_sub_manager && chmod +x deploy.sh run.sh stop.sh && ./deploy.sh
 ```
-## 注意
+
+## docker compose部署
+```bash
+version: "3.9"
+
+services:
+  node_sub_manager:
+    image: 999k923/node_sub_manager:latest
+    container_name: node_sub_manager
+    restart: always
+
+    ports:
+      - "5786:5786"
+
+    volumes:
+      # 持久化 SQLite 数据库
+      - ./nodes.db:/app/nodes.db
+      # 持久化 token，避免重启后 token 改变
+      - ./access_token.txt:/app/access_token.txt
+      # 日志（可选）
+      - ./logs:/app/logs
+
+    environment:
+      # Flask 运行地址
+      - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_RUN_PORT=5786
+```
+
+## 注意## 注意
 默认监听ipv4，如果是ipv6 only vps,需要把部署文件里面的监听改成监听ipv6后重启
 ```bash
 nano app.py
