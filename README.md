@@ -1,4 +1,4 @@
-# Node Subscription Manager
+# 节点订阅管理器Node Subscription Manager
 实现多个代理/节点集中起来，通过一个域名提供统一订阅，客户端更新订阅就能获取所有节点。
 
 轻量级节点管理系统，支持 TUIC/VLESS/VMess/Trojan/hy2等等节点统一订阅。
