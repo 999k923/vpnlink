@@ -62,7 +62,7 @@ bash run.sh
 journalctl -u node_sub -f
 ```
 
-## docker compose部署  docker部署有报错，问AI 可以解决，或者用上面的一键部署不会有报错。
+## docker compose部署  docker部署有报错，下面实际碰到的一些问题都解决了，如果还有其他问题问AI,或者用上面的一键部署不会有报错。
 ```bash
 services:
   node_sub_manager:
@@ -82,13 +82,14 @@ services:
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_RUN_PORT=5786
 ```
-如果报错shh界面运行下面代码：
+安装报错shh界面运行下面代码：
 ```bash
 rm -rf /opt/stacks/node/access_token.txt
 ```
 ```bash
 touch /opt/stacks/node/access_token.txt
 ```
+登录管理后台页面出错乱码，vps的ssh界面执行数据库初始化：
 ```bash
 docker exec -it node_sub_manager /bin/bash
 ```
@@ -100,12 +101,12 @@ docker部署后获取不到订阅检查订阅tocken有没有正确生成，
 ```bash
 docker exec -it node_sub_manager cat /app/access_token.txt
 ```
-获取不到token，手动写入
+执行后获取不到token的数值，手动写入
 1. 删除旧 token 文件
 ```bash
 rm -f /opt/stacks/node/access_token.txt
 ```
-3. 写入新的 token
+3. 写入新的 token，自行更换
 ```bash
 echo "abc123xyz" > /opt/stacks/node/access_token.txt
 ```
