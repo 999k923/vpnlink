@@ -1,5 +1,5 @@
 # app.py
-from flask import Flask, Response, render_template, request, redirect, url_for
+from flask import Flask, Response, render_template, request, redirect, url_for, flash
 from models import db, Node
 import base64
 import os
@@ -9,6 +9,7 @@ from update_node_name import update_nodes  # 安全导入，无循环依赖
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///nodes.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.secret_key = "secret_key_for_flash"  # 防止 Flask flash 报错
 db.init_app(app)
 
 # 初始化数据库
@@ -30,17 +31,22 @@ def index():
 def add_node():
     name = request.form.get("name", "").strip()
     link = request.form.get("link", "").strip()
-
-    # 去掉 link 中自带的 #备注
-    link = re.sub(r"#.*$", "", link)
+    link = re.sub(r"#.*$", "", link)  # 去掉 link 自带的备注
 
     if name and link:
         node = Node(name=name, link=link)
-        db.session.add(node)
-        db.session.commit()
-
-        # 新增节点后自动更新所有 VMESS/VLESS 备注
-        update_nodes()
+        try:
+            db.session.add(node)
+            db.session.commit()
+            try:
+                update_nodes()
+            except Exception as e:
+                print(f"update_nodes 出错: {e}")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"添加节点失败: {e}", "danger")
+    else:
+        flash("节点名称或链接不能为空", "warning")
 
     return redirect(url_for("index"))
 
@@ -49,12 +55,18 @@ def add_node():
 def delete_node(node_id):
     node = Node.query.get(node_id)
     if node:
-        db.session.delete(node)
-        db.session.commit()
-
-        # 删除节点后自动更新备注
-        update_nodes()
-
+        try:
+            db.session.delete(node)
+            db.session.commit()
+            try:
+                update_nodes()
+            except Exception as e:
+                print(f"update_nodes 出错: {e}")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"删除节点失败: {e}", "danger")
+    else:
+        flash("节点不存在", "warning")
     return redirect(url_for("index"))
 
 
@@ -62,12 +74,18 @@ def delete_node(node_id):
 def toggle_node(node_id):
     node = Node.query.get(node_id)
     if node:
-        node.enabled = not node.enabled
-        db.session.commit()
-
-        # 切换启用状态后自动更新备注
-        update_nodes()
-
+        try:
+            node.enabled = not node.enabled
+            db.session.commit()
+            try:
+                update_nodes()
+            except Exception as e:
+                print(f"update_nodes 出错: {e}")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"切换节点状态失败: {e}", "danger")
+    else:
+        flash("节点不存在", "warning")
     return redirect(url_for("index"))
 
 
@@ -77,17 +95,21 @@ def edit_node(node_id):
     if node:
         name = request.form.get("name", "").strip()
         link = request.form.get("link", "").strip()
-
         if name:
             node.name = name
         if link:
             node.link = re.sub(r"#.*$", "", link)
-
-        db.session.commit()
-
-        # 修改节点后自动更新备注
-        update_nodes()
-
+        try:
+            db.session.commit()
+            try:
+                update_nodes()
+            except Exception as e:
+                print(f"update_nodes 出错: {e}")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"编辑节点失败: {e}", "danger")
+    else:
+        flash("节点不存在", "warning")
     return redirect(url_for("index"))
 
 
@@ -133,4 +155,4 @@ def sub():
 
 
 if __name__ == "__main__":
-    app.run(host="::", port=5786)
+    app.run(host="::", port=5786, debug=True)
