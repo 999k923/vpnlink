@@ -21,10 +21,8 @@ Web后台新增，修改，删除节点。
 git clone https://github.com/999k923/node_sub_manager.git && cd node_sub_manager && chmod +x deploy.sh run.sh stop.sh && ./deploy.sh
 ```
 
-## docker compose部署
+## docker compose部署  docker部署有报错，问AI 可以解决，或者用上面的一键部署不会有报错。
 ```bash
-version: "3.9"
-
 services:
   node_sub_manager:
     image: 999k923/node_sub_manager:latest
@@ -35,17 +33,26 @@ services:
       - "5786:5786"
 
     volumes:
-      # 持久化 SQLite 数据库
       - ./nodes.db:/app/nodes.db
-      # 持久化 token，避免重启后 token 改变
       - ./access_token.txt:/app/access_token.txt
-      # 日志（可选）
       - ./logs:/app/logs
 
     environment:
-      # Flask 运行地址
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_RUN_PORT=5786
+```
+如果报错shh界面运行下面代码：
+```bash
+rm -rf /opt/stacks/node/access_token.txt
+```
+```bash
+touch /opt/stacks/node/access_token.txt
+```
+```bash
+docker exec -it node_sub_manager /bin/bash
+```
+```bash
+python3 db_init.py
 ```
 
 ## 注意## 注意
