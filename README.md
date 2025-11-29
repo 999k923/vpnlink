@@ -19,6 +19,7 @@ git clone https://github.com/999k923/node_sub_manager.git && cd node_sub_manager
 ```bash
 nano app.py
 ```
+最后一行里面的app.run(host="0.0.0.0", port=5786)改成 app.run(host="::", port=5786)
 访问后台：`http://服务器IP:5786/`  
 订阅地址：`http://服务器IP:5786/sub`
 
