@@ -19,7 +19,7 @@ Web后台管理节点，订阅 Base64 自动带备注。
 git clone https://github.com/999k923/node_sub_manager.git && cd node_sub_manager && chmod +x deploy.sh run.sh stop.sh && ./deploy.sh
 ```
 ## 注意
-默认监听ipv4，如果是ipv6only vps需要改成监听ipv6
+默认监听ipv4，如果是ipv6only vps需要改成监听ipv6后重启
 ```bash
 nano app.py
 ```
