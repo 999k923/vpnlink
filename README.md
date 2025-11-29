@@ -15,6 +15,7 @@ Web后台新增，修改，删除节点。
 - Web后台增删改节点。
 - 方便不同设备获取订阅后节点备名称会显示在客户端节点备注里面
 - Ubuntu 一键部署
+- docker compose部署
 
 ## 一键部署
 ```bash
@@ -82,7 +83,7 @@ services:
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_RUN_PORT=5786
 ```
-安装报错shh界面运行下面代码：
+安装报错，vps shh界面运行下面代码：
 ```bash
 rm -rf /opt/stacks/node/access_token.txt
 ```
