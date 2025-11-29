@@ -33,6 +33,14 @@ sudo systemctl daemon-reload
 sudo systemctl start node_sub
 sudo systemctl enable node_sub
 
-echo "部署完成！"
-echo "访问后台: http://服务器IP:5786/"
-echo "订阅地址: http://服务器IP:5786/sub"
+# 显示订阅 token
+TOKEN_FILE="access_token.txt"
+if [ -f "$TOKEN_FILE" ]; then
+    TOKEN=$(cat "$TOKEN_FILE")
+    echo "部署完成！"
+    echo "访问后台: http://服务器IP:5786/"
+    echo "订阅地址: http://服务器IP:5786/sub?token=$TOKEN"
+    echo "访问订阅时请使用 token: $TOKEN"
+else
+    echo "token 文件不存在，请先运行 app.py 生成 token"
+fi
