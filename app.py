@@ -1,130 +1,158 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
+# app.py
+from flask import Flask, Response, render_template, request, redirect, url_for, flash
+from models import db, Node
+import base64
 import os
-import string
-import random
-from flask import Flask, request, render_template, redirect, url_for, abort
-from flask_sqlalchemy import SQLAlchemy
-
-# -------------------------
-# 基础配置
-# -------------------------
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-INSTANCE_DIR = os.path.join(BASE_DIR, 'instance')
-DB_PATH = os.path.join(INSTANCE_DIR, 'nodes.db')
-
-# 创建 instance 文件夹
-os.makedirs(INSTANCE_DIR, exist_ok=True)
-# 确保 instance 目录可写
-os.chmod(INSTANCE_DIR, 0o775)
+import re
+from update_node_name import update_nodes  # 安全导入，无循环依赖
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///nodes.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.secret_key = "secret_key_for_flash"  # 防止 Flask flash 报错
+db.init_app(app)
 
-db = SQLAlchemy(app)
-
-# -------------------------
-# 数据库模型
-# -------------------------
-class Node(db.Model):
-    __tablename__ = 'nodes'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255))
-    protocol = db.Column(db.String(50))
-    address = db.Column(db.String(255))
-    port = db.Column(db.Integer)
-    remark = db.Column(db.String(255))  # 节点备注
-
-# -------------------------
-# Token 生成/读取
-# -------------------------
-TOKEN_FILE = os.path.join(INSTANCE_DIR, 'access_token.txt')
-
-def generate_token(length=20):
-    chars = string.ascii_letters + string.digits
-    return ''.join(random.choice(chars) for _ in range(length))
-
-def get_token():
-    if os.path.exists(TOKEN_FILE):
-        with open(TOKEN_FILE, 'r') as f:
-            return f.read().strip()
-    else:
-        token = generate_token()
-        with open(TOKEN_FILE, 'w') as f:
-            f.write(token)
-        os.chmod(TOKEN_FILE, 0o600)  # 文件安全权限
-        return token
-
-# -------------------------
 # 初始化数据库
-# -------------------------
 with app.app_context():
-    db.create_all()
-    # 确保数据库文件可写
-    if os.path.exists(DB_PATH):
-        os.chmod(DB_PATH, 0o664)
+    if not os.path.exists("nodes.db"):
+        db.create_all()
 
-# -------------------------
-# 路由
-# -------------------------
-@app.route('/')
+
+# ---------------------------
+# Web管理后台
+# ---------------------------
+@app.route("/")
 def index():
-    try:
-        nodes = Node.query.all()
-    except Exception as e:
-        return f"数据库错误: {e}", 500
-    return render_template('index.html', nodes=nodes, token=get_token())
+    nodes = Node.query.all()
+    return render_template("index.html", nodes=nodes)
 
-@app.route('/add', methods=['POST'])
+
+@app.route("/add", methods=["POST"])
 def add_node():
-    try:
-        data = request.form
-        node = Node(
-            name=data.get('name'),
-            protocol=data.get('protocol'),
-            address=data.get('address'),
-            port=int(data.get('port', 0)),
-            remark=data.get('remark', '')
-        )
-        db.session.add(node)
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        return f"添加节点失败: {e}", 500
-    return redirect(url_for('index'))
+    name = request.form.get("name", "").strip()
+    link = request.form.get("link", "").strip()
+    link = re.sub(r"#.*$", "", link)  # 去掉 link 自带的备注
 
-@app.route('/delete/<int:node_id>', methods=['POST'])
+    if name and link:
+        node = Node(name=name, link=link)
+        try:
+            db.session.add(node)
+            db.session.commit()
+            try:
+                update_nodes()
+            except Exception as e:
+                print(f"update_nodes 出错: {e}")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"添加节点失败: {e}", "danger")
+    else:
+        flash("节点名称或链接不能为空", "warning")
+
+    return redirect(url_for("index"))
+
+
+@app.route("/delete/<int:node_id>")
 def delete_node(node_id):
-    try:
-        node = Node.query.get_or_404(node_id)
-        db.session.delete(node)
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        return f"删除节点失败: {e}", 500
-    return redirect(url_for('index'))
+    node = Node.query.get(node_id)
+    if node:
+        try:
+            db.session.delete(node)
+            db.session.commit()
+            try:
+                update_nodes()
+            except Exception as e:
+                print(f"update_nodes 出错: {e}")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"删除节点失败: {e}", "danger")
+    else:
+        flash("节点不存在", "warning")
+    return redirect(url_for("index"))
 
-@app.route('/sub')
-def get_sub():
-    token = request.args.get('token', '')
-    if token != get_token():
-        abort(403, description="访问订阅需要正确的 token")
-    
-    try:
-        nodes = Node.query.all()
-    except Exception as e:
-        return f"读取订阅失败: {e}", 500
 
-    result = ""
-    for node in nodes:
-        result += f"{node.protocol}://{node.address}:{node.port}#{node.remark}\n"
-    return result, 200, {'Content-Type': 'text/plain; charset=utf-8'}
+@app.route("/toggle/<int:node_id>")
+def toggle_node(node_id):
+    node = Node.query.get(node_id)
+    if node:
+        try:
+            node.enabled = not node.enabled
+            db.session.commit()
+            try:
+                update_nodes()
+            except Exception as e:
+                print(f"update_nodes 出错: {e}")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"切换节点状态失败: {e}", "danger")
+    else:
+        flash("节点不存在", "warning")
+    return redirect(url_for("index"))
 
-# -------------------------
-# 启动
-# -------------------------
-if __name__ == '__main__':
-    print(f"访问订阅链接时需要使用 token: {get_token()}")
-    app.run(host='::', port=5786)
+
+@app.route("/edit/<int:node_id>", methods=["POST"])
+def edit_node(node_id):
+    node = Node.query.get(node_id)
+    if node:
+        name = request.form.get("name", "").strip()
+        link = request.form.get("link", "").strip()
+        if name:
+            node.name = name
+        if link:
+            node.link = re.sub(r"#.*$", "", link)
+        try:
+            db.session.commit()
+            try:
+                update_nodes()
+            except Exception as e:
+                print(f"update_nodes 出错: {e}")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"编辑节点失败: {e}", "danger")
+    else:
+        flash("节点不存在", "warning")
+    return redirect(url_for("index"))
+
+
+# ---------------------------
+# 动态订阅生成
+# ---------------------------
+@app.route("/sub")
+def sub():
+    nodes = Node.query.filter_by(enabled=True).all()
+    out_links = []
+
+    for n in nodes:
+        link = n.link.strip()
+
+        # VMESS
+        if link.startswith("vmess://"):
+            import json
+            try:
+                raw = link[8:]
+                decoded = base64.b64decode(raw + "==").decode()
+                j = json.loads(decoded)
+                j["ps"] = n.name
+                new_raw = base64.b64encode(json.dumps(j).encode()).decode()
+                out_links.append("vmess://" + new_raw)
+            except Exception as e:
+                out_links.append(link)
+            continue
+
+        # VLESS
+        elif link.startswith("vless://"):
+            clean = re.sub(r"#.*$", "", link)
+            out_links.append(f"{clean}#{n.name}")
+            continue
+
+        # 其它协议
+        else:
+            clean = re.sub(r"#.*$", "", link)
+            out_links.append(f"{clean}#{n.name}")
+
+    sub_content = "\n".join(out_links)
+    sub_b64 = base64.b64encode(sub_content.encode()).decode()
+    return Response(sub_b64, mimetype="text/plain")
+
+
+if __name__ == "__main__":
+    app.run(host="::", port=5786, debug=True)
