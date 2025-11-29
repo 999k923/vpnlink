@@ -4,7 +4,7 @@ from models import db, Node
 import base64
 import os
 import re
-from update_node_name import update_nodes  # 导入更新函数
+from update_node_name import update_nodes  # 安全导入，无循环依赖
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///nodes.db'
