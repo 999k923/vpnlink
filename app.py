@@ -1,139 +1,113 @@
-from flask import Flask, Response, render_template, request, redirect, url_for
-from models import db, Node
-import base64
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import os
-import re
-import json
-import secrets
+import string
+import random
+from flask import Flask, request, render_template, redirect, url_for, abort
+from flask_sqlalchemy import SQLAlchemy
 
-# ---------------------------
-# 随机生成访问 token，如果 token.txt 存在则读取
-# ---------------------------
-TOKEN_FILE = "instance/token.txt"
-if not os.path.exists("instance"):
-    os.makedirs("instance")
+# -------------------------
+# 基础配置
+# -------------------------
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+INSTANCE_DIR = os.path.join(BASE_DIR, 'instance')
+DB_PATH = os.path.join(INSTANCE_DIR, 'nodes.db')
 
-if os.path.exists(TOKEN_FILE):
-    with open(TOKEN_FILE, "r") as f:
-        ACCESS_TOKEN = f.read().strip()
-else:
-    ACCESS_TOKEN = secrets.token_urlsafe(16)  # 生成随机 token
-    with open(TOKEN_FILE, "w") as f:
-        f.write(ACCESS_TOKEN)
+# 创建 instance 文件夹
+os.makedirs(INSTANCE_DIR, exist_ok=True)
 
-# ---------------------------
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/nodes.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db.init_app(app)
 
+db = SQLAlchemy(app)
+
+# -------------------------
+# 数据库模型
+# -------------------------
+class Node(db.Model):
+    __tablename__ = 'nodes'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255))
+    protocol = db.Column(db.String(50))
+    address = db.Column(db.String(255))
+    port = db.Column(db.Integer)
+    remark = db.Column(db.String(255))  # 节点备注
+
+# -------------------------
+# Token 生成/读取
+# -------------------------
+TOKEN_FILE = os.path.join(INSTANCE_DIR, 'access_token.txt')
+
+def generate_token(length=20):
+    chars = string.ascii_letters + string.digits
+    return ''.join(random.choice(chars) for _ in range(length))
+
+def get_token():
+    if os.path.exists(TOKEN_FILE):
+        with open(TOKEN_FILE, 'r') as f:
+            return f.read().strip()
+    else:
+        token = generate_token()
+        with open(TOKEN_FILE, 'w') as f:
+            f.write(token)
+        return token
+
+# -------------------------
+# 初始化数据库
+# -------------------------
 with app.app_context():
-    if not os.path.exists("instance/nodes.db"):
-        db.create_all()
+    db.create_all()
 
-# ---------------------------
-# Web 管理后台
-# ---------------------------
-@app.route("/")
+# -------------------------
+# 路由
+# -------------------------
+@app.route('/')
 def index():
-    nodes = Node.query.all()
-    return render_template("index.html", nodes=nodes)
+    try:
+        nodes = Node.query.all()
+    except Exception as e:
+        return f"数据库错误: {e}", 500
+    return render_template('index.html', nodes=nodes)
 
-
-@app.route("/add", methods=["POST"])
+@app.route('/add', methods=['POST'])
 def add_node():
-    name = request.form.get("name", "").strip()
-    link = request.form.get("link", "").strip()
-    link = re.sub(r"#.*$", "", link)
+    data = request.form
+    node = Node(
+        name=data.get('name'),
+        protocol=data.get('protocol'),
+        address=data.get('address'),
+        port=int(data.get('port')),
+        remark=data.get('remark', '')
+    )
+    db.session.add(node)
+    db.session.commit()
+    return redirect(url_for('index'))
 
-    if name and link:
-        node = Node(name=name, link=link)
-        db.session.add(node)
-        db.session.commit()
-        update_node_name(node)
-    return redirect(url_for("index"))
-
-
-@app.route("/delete/<int:node_id>")
+@app.route('/delete/<int:node_id>', methods=['POST'])
 def delete_node(node_id):
-    node = Node.query.get(node_id)
-    if node:
-        db.session.delete(node)
-        db.session.commit()
-    return redirect(url_for("index"))
+    node = Node.query.get_or_404(node_id)
+    db.session.delete(node)
+    db.session.commit()
+    return redirect(url_for('index'))
 
+@app.route('/sub')
+def get_sub():
+    token = request.args.get('token', '')
+    if token != get_token():
+        abort(403, description="访问订阅需要正确的 token")
+    
+    nodes = Node.query.all()
+    result = ""
+    for node in nodes:
+        # 简单示例输出，可根据协议格式调整
+        result += f"{node.protocol}://{node.address}:{node.port}#{node.remark}\n"
+    return result, 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
-@app.route("/toggle/<int:node_id>")
-def toggle_node(node_id):
-    node = Node.query.get(node_id)
-    if node:
-        node.enabled = not node.enabled
-        db.session.commit()
-    return redirect(url_for("index"))
-
-
-# ---------------------------
-# 动态订阅生成
-# ---------------------------
-@app.route("/sub")
-def sub():
-    token = request.args.get("token", "")
-    if token != ACCESS_TOKEN:
-        return "Forbidden", 403
-
-    nodes = Node.query.filter_by(enabled=True).all()
-    out_links = []
-
-    for n in nodes:
-        link = n.link.strip()
-
-        # VMESS 节点
-        if link.startswith("vmess://"):
-            try:
-                raw = link[8:]
-                decoded = base64.b64decode(raw + "==").decode()
-                j = json.loads(decoded)
-                j["ps"] = n.name
-                new_raw = base64.b64encode(json.dumps(j).encode()).decode()
-                out_links.append("vmess://" + new_raw)
-            except:
-                out_links.append(link)
-        # VLESS 节点
-        elif link.startswith("vless://"):
-            clean = re.sub(r"#.*$", "", link)
-            out_links.append(f"{clean}#{n.name}")
-        else:
-            clean = re.sub(r"#.*$", "", link)
-            out_links.append(f"{clean}#{n.name}")
-
-    sub_content = "\n".join(out_links)
-    sub_b64 = base64.b64encode(sub_content.encode()).decode()
-    return Response(sub_b64, mimetype="text/plain")
-
-
-# ---------------------------
-# 自动更新节点备注
-# ---------------------------
-def update_node_name(node):
-    link = node.link.strip()
-    if link.startswith("vmess://"):
-        try:
-            raw = link[8:]
-            decoded = base64.b64decode(raw + "==").decode()
-            j = json.loads(decoded)
-            j["ps"] = node.name
-            new_raw = base64.b64encode(json.dumps(j).encode()).decode()
-            node.link = "vmess://" + new_raw
-            db.session.commit()
-        except:
-            pass
-    elif link.startswith("vless://"):
-        clean = re.sub(r"#.*$", "", link)
-        node.link = f"{clean}#{node.name}"
-        db.session.commit()
-
-
-# ---------------------------
-if __name__ == "__main__":
-    print(f"访问订阅链接时需要使用 token: {ACCESS_TOKEN}")
-    app.run(host="::", port=5786)
+# -------------------------
+# 启动
+# -------------------------
+if __name__ == '__main__':
+    print(f"访问订阅链接时需要使用 token: {get_token()}")
+    app.run(host='::', port=5786)
