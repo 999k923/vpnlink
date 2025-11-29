@@ -1,10 +1,11 @@
-# app.py
-from flask import Flask, Response, render_template, request, redirect, url_for, flash
+from flask import Flask, Response, render_template, request, redirect, url_for, flash, abort
 from models import db, Node
 import base64
 import os
 import re
 from update_node_name import update_nodes  # 安全导入，无循环依赖
+import string
+import random
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///nodes.db'
@@ -17,6 +18,24 @@ with app.app_context():
     if not os.path.exists("nodes.db"):
         db.create_all()
 
+# ---------------------------
+# Token 生成/读取
+# ---------------------------
+TOKEN_FILE = "access_token.txt"
+
+def generate_token(length=20):
+    chars = string.ascii_letters + string.digits
+    return ''.join(random.choice(chars) for _ in range(length))
+
+def get_token():
+    if os.path.exists(TOKEN_FILE):
+        with open(TOKEN_FILE, "r") as f:
+            return f.read().strip()
+    else:
+        token = generate_token()
+        with open(TOKEN_FILE, "w") as f:
+            f.write(token)
+        return token
 
 # ---------------------------
 # Web管理后台
@@ -24,7 +43,8 @@ with app.app_context():
 @app.route("/")
 def index():
     nodes = Node.query.all()
-    return render_template("index.html", nodes=nodes)
+    token = get_token()  # 可选：在网页显示 token
+    return render_template("index.html", nodes=nodes, token=token)
 
 
 @app.route("/add", methods=["POST"])
@@ -118,6 +138,10 @@ def edit_node(node_id):
 # ---------------------------
 @app.route("/sub")
 def sub():
+    token = request.args.get("token", "")
+    if token != get_token():
+        abort(403, description="访问订阅需要正确的 token")
+
     nodes = Node.query.filter_by(enabled=True).all()
     out_links = []
 
@@ -155,4 +179,5 @@ def sub():
 
 
 if __name__ == "__main__":
+    print(f"访问订阅链接时需要使用 token: {get_token()}")
     app.run(host="::", port=5786, debug=True)
