@@ -1,33 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>节点管理</title>
+    <meta charset="UTF-8">
+    <title>Node Manager</title>
 </head>
 <body>
-<h2>节点列表</h2>
-<table border="1">
-    <tr><th>ID</th><th>备注</th><th>节点链接</th><th>状态</th><th>操作</th></tr>
-    {% for n in nodes %}
-    <tr>
-        <td>{{ n.id }}</td>
-        <td>{{ n.name }}</td>
-        <td style="word-break:break-all">{{ n.link }}</td>
-        <td>{{ "启用" if n.enabled else "禁用" }}</td>
-        <td>
-            <a href="/toggle/{{n.id}}">切换</a> | 
-            <a href="/delete/{{n.id}}">删除</a>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+    <h1>节点管理后台</h1>
 
-<h2>添加节点</h2>
-<form action="/add" method="post">
-    备注: <input name="name" size="30"><br>
-    节点链接: <input name="link" size="100"><br>
-    <button type="submit">添加</button>
-</form>
+    <!-- 添加节点 -->
+    <form action="{{ url_for('add_node') }}" method="post">
+        名称: <input type="text" name="name" required>
+        链接: <input type="text" name="link" required>
+        <button type="submit">添加</button>
+    </form>
 
-<p>订阅地址: <a href="/sub">/sub</a></p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul>
+        {% for category, message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <h2>节点列表</h2>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>名称</th>
+            <th>链接</th>
+            <th>启用</th>
+            <th>操作</th>
+        </tr>
+        {% for node in nodes %}
+        <tr>
+            <td>{{ node.id }}</td>
+            <td>{{ node.name }}</td>
+            <td>{{ node.link }}</td>
+            <td>{{ '✅' if node.enabled else '❌' }}</td>
+            <td>
+                <a href="{{ url_for('toggle_node', node_id=node.id) }}">切换</a>
+                <a href="{{ url_for('delete_node', node_id=node.id) }}">删除</a>
+                <form action="{{ url_for('edit_node', node_id=node.id) }}" method="post" style="display:inline">
+                    名称: <input type="text" name="name" value="{{ node.name }}">
+                    链接: <input type="text" name="link" value="{{ node.link }}">
+                    <button type="submit">修改</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
 </body>
 </html>
