@@ -24,11 +24,11 @@ Web后台新增，修改，删除节点。
 git clone https://github.com/999k923/node_sub_manager.git && cd node_sub_manager && chmod +x deploy.sh run.sh stop.sh && ./deploy.sh
 ```
 ## 注意## 注意
-默认监听ipv4，如果是ipv6 only vps,需要把部署文件里面的监听改成监听ipv6后重启，ipv4 vps不需要改。
+默认监听ipv6，方便很多ipv6 only vps,如果需要监听ipv4端口需要把部署文件里面的监听改成监听ipv4后重启.
 ```bash
 nano app.py
 ```
-最后一行里面的app.run(host="0.0.0.0", port=5786)改成 app.run(host="::", port=5786)
+最后一行里面的app.run(host="::", port=5786)改成 app.run(host="0.0.0.0", port=5786)
 
 访问后台：`http://服务器IP:5786/`  
 
