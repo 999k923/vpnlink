@@ -84,12 +84,19 @@ services:
       - FLASK_RUN_PORT=5786
 ```
 安装报错，vps shh界面运行下面代码：
+解决办法：
+1️⃣ 确认宿主机文件类型
 ```bash
-rm -rf /opt/stacks/node/access_token.txt
+ls -l /opt/stacks/node_sub_manager/access_token.txt
+file /opt/stacks/node_sub_manager/access_token.txt
 ```
+
+如果显示是 directory → 先删除它：
 ```bash
-touch /opt/stacks/node/access_token.txt
+rm -rf /opt/stacks/node_sub_manager/access_token.txt
+touch /opt/stacks/node_sub_manager/access_token.txt
 ```
+
 登录管理后台页面出错乱码，vps的ssh界面执行数据库初始化：
 ```bash
 docker exec -it node_sub_manager /bin/bash
