@@ -1,22 +1,21 @@
 FROM python:3.11-slim
 
-# 安装依赖
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        bash \
-        && rm -rf /var/lib/apt/lists/*
-
-# 设置工作目录
 WORKDIR /app
 
 # 复制项目文件
-COPY . /app
+COPY . .
 
-# 安装 Python 依赖
+# 安装依赖
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 设置 entrypoint
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+# 设置 Flask 使用 0.0.0.0
+ENV FLASK_RUN_HOST=0.0.0.0
+ENV FLASK_RUN_PORT=5786
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+# 确保 token 文件存在（如果是挂载卷则会覆盖）
+RUN if [ ! -f access_token.txt ]; then touch access_token.txt; fi
+
+EXPOSE 5786
+
+# 启动服务
+CMD ["python3", "app.py"]
