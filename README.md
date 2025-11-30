@@ -1,6 +1,8 @@
 # 节点订阅管理器Node Subscription Manager
 实现多个代理/节点集中起来，通过一个域名提供统一订阅，客户端更新订阅就能获取所有节点。
 
+支持一键部署，docker部署
+
 轻量级节点管理系统，支持 TUIC/VLESS/VMess/Trojan/hy2等等节点统一管理方便域名订阅。
 Web后台新增，修改，删除节点。
 
@@ -22,7 +24,7 @@ Web后台新增，修改，删除节点。
 git clone https://github.com/999k923/node_sub_manager.git && cd node_sub_manager && chmod +x deploy.sh run.sh stop.sh && ./deploy.sh
 ```
 ## 注意## 注意
-默认监听ipv4，如果是ipv6 only vps,需要把部署文件里面的监听改成监听ipv6后重启
+默认监听ipv4，如果是ipv6 only vps,需要把部署文件里面的监听改成监听ipv6后重启，ipv4 vps不需要改。
 ```bash
 nano app.py
 ```
