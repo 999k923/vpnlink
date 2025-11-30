@@ -20,7 +20,7 @@ with app.app_context():
         db.create_all()
 
 # ---------------------------
-# Token 生成/读取（兼容 Docker / 宿主机）
+# Token 生成/读取
 # ---------------------------
 TOKEN_FILE = "access_token.txt"
 
@@ -28,42 +28,15 @@ def generate_token(length=20):
     chars = string.ascii_letters + string.digits
     return ''.join(random.choice(chars) for _ in range(length))
 
-
 def get_token():
-    """
-    兼容四种情况：
-    1. 文件不存在 → 自动创建
-    2. 文件为空 → 自动写入 token
-    3. 映射目录只读 → 自动 fallback 到内存 token
-    4. 正常文件 → 读取
-    """
-    token = None
-
-    # 情况 1：TOKEN_FILE 存在但不可读（例如卷映射错误）
-    try:
-        if os.path.isfile(TOKEN_FILE):
-            with open(TOKEN_FILE, "r") as f:
-                token = f.read().strip()
-    except:
-        pass
-
-    # 情况 2：文件存在但 token 为空 → 自动生成并覆盖
-    if token:
-        return token
-
-    token = generate_token()
-
-    # 情况 3：尝试写入 token
-    try:
+    if os.path.exists(TOKEN_FILE):
+        with open(TOKEN_FILE, "r") as f:
+            return f.read().strip()
+    else:
+        token = generate_token()
         with open(TOKEN_FILE, "w") as f:
             f.write(token)
-    except Exception as e:
-        print(f"[警告] 无法写入 {TOKEN_FILE}，使用内存 token: {token}")
-        # Docker 映射只读时可能发生
-        pass
-
-    return token
-
+        return token
 
 # ---------------------------
 # Web 后台用户名密码
@@ -88,7 +61,6 @@ def requires_auth(f):
             return authenticate()
         return f(*args, **kwargs)
     return decorated
-
 
 # ---------------------------
 # Web管理后台
