@@ -107,7 +107,7 @@ docker exec -it node_sub_manager /bin/bash
 python3 db_init.py
 ```
 
-docker部署后获取不到订阅检查订阅tocken有没有正确生成，返回vps的ssh主界面执行
+docker部署后获取不到订阅检查订阅tocken有没有正确生成，断开SSH重新连接返回vps的ssh主界面执行
 ```bash
 docker exec -it node_sub_manager cat /app/access_token.txt
 ```
