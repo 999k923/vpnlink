@@ -84,6 +84,7 @@ services:
       - FLASK_RUN_PORT=5786
 ```
 安装报错，vps shh界面运行下面代码：
+安装的时候名称都是用的这个：node_sub_manager ，代码可以照抄，否则要改路径名称。
 解决办法：
 1️⃣ 确认宿主机文件类型
 ```bash
@@ -112,11 +113,11 @@ docker exec -it node_sub_manager cat /app/access_token.txt
 执行后获取不到token的数值，手动写入
 1. 删除旧 token 文件
 ```bash
-rm -f /opt/stacks/node/access_token.txt
+rm -f /opt/stacks/node_sub_manager/access_token.txt
 ```
 3. 写入新的 token，自行更换
 ```bash
-echo "abc123xyz" > /opt/stacks/node/access_token.txt
+echo "abc123xyz" > /opt/stacks/node_sub_manager/access_token.txt
 ```
 5. 重启服务
 ```bash
