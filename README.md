@@ -99,7 +99,7 @@ rm -rf /opt/stacks/node_sub_manager/access_token.txt
 touch /opt/stacks/node_sub_manager/access_token.txt
 ```
 
-登录管理后台页面出错乱码，vps的ssh界面执行数据库初始化：
+可以正常启动登录管理后台了，页面出错乱码，vps的ssh主界面执行数据库初始化：
 ```bash
 docker exec -it node_sub_manager /bin/bash
 ```
@@ -107,7 +107,7 @@ docker exec -it node_sub_manager /bin/bash
 python3 db_init.py
 ```
 
-docker部署后获取不到订阅检查订阅tocken有没有正确生成，
+docker部署后获取不到订阅检查订阅tocken有没有正确生成，返回vps的ssh主界面执行
 ```bash
 docker exec -it node_sub_manager cat /app/access_token.txt
 ```
