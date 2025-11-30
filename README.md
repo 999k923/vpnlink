@@ -63,7 +63,7 @@ bash run.sh
 journalctl -u node_sub -f
 ```
 
-## docker compose部署  docker部署有报错，下面实际碰到的一些问题都解决了，如果还有其他问题问AI,或者用上面的一键部署不会有报错。
+## docker compose部署 
 ```bash
 services:
   node_sub_manager:
@@ -83,7 +83,7 @@ services:
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_RUN_PORT=5786
 ```
-安装报错，vps shh界面运行下面代码：
+安装后启动错误，vps shh界面运行下面代码手动输入token：
 docker部署的时候所有名称都是用的这个：node_sub_manager ，代码可以照抄，否则要改路径名称。
 
 解决办法：
@@ -125,4 +125,4 @@ echo "abc123xyz" > /opt/stacks/node_sub_manager/access_token.txt
 docker restart node_sub_manager
 ```
 
-还是那句话还有其他问题问AI可以解决，或者用上面的一键部署不会有报
+还有其他问题问AI可以解决，或者用上面的一键部署不需要任何其他操作。
