@@ -41,8 +41,8 @@ def get_token():
 # ---------------------------
 # Web 后台用户名密码
 # ---------------------------
-WEB_USER = "admin"   # 手动填写用户名
-WEB_PASS = "123456"  # 手动填写密码
+WEB_USER = "mimayoudianfuza" # 手动填写用户名
+WEB_PASS = "zhendehenfuza"  # 手动填写密码
 
 def check_auth(username, password):
     return username == WEB_USER and password == WEB_PASS
