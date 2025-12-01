@@ -85,7 +85,7 @@ services:
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_RUN_PORT=5786
 ```
-安装后启动错误，vps shh界面运行下面代码手动输入token：
+安装后启动错误，vps shh界面运行下面代码
 docker部署的时候所有名称都是用的这个：node_sub_manager ，代码可以照抄，否则要改路径名称。
 
 解决办法：
