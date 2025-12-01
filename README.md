@@ -65,7 +65,7 @@ bash run.sh
 journalctl -u node_sub -f
 ```
 
-## docker compose部署 
+## docker compose部署 所有名称都是用的这个：node_sub_manager ，方便后面代码可以照抄，否则要改路径名称。
 ```bash
 services:
   node_sub_manager:
@@ -85,10 +85,7 @@ services:
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_RUN_PORT=5786
 ```
-安装后启动错误，vps shh界面运行下面代码
-docker部署的时候所有名称都是用的这个：node_sub_manager ，代码可以照抄，否则要改路径名称。
-
-#### 解决办法：
+### 安装后启动错误解决办法：
 确认宿主机文件类型
 ```bash
 ls -l /opt/stacks/node_sub_manager/access_token.txt
