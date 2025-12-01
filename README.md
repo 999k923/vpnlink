@@ -34,9 +34,9 @@ nano app.py
 
 默认用户名密码
 
-WEB_USER = "admin"   # 手动填写用户名
+WEB_USER = "mimayoudianfuza"   # 手动填写用户名
 
-WEB_PASS = "123456"  # 手动填写密码
+WEB_PASS = "zhendehenfuza"  # 手动填写密码
 
 更改用户名密码
 ```bash
