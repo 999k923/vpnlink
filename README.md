@@ -23,7 +23,7 @@ Web后台新增，修改，删除节点。
 ```bash
 git clone https://github.com/999k923/node_sub_manager.git && cd node_sub_manager && chmod +x deploy.sh run.sh stop.sh && ./deploy.sh
 ```
-## 注意## 注意
+## 注意
 默认监听ipv6，方便很多ipv6 only vps,如果需要监听ipv4端口需要把部署文件里面的监听改成监听ipv4后重启.
 ```bash
 nano app.py
@@ -88,8 +88,8 @@ services:
 安装后启动错误，vps shh界面运行下面代码
 docker部署的时候所有名称都是用的这个：node_sub_manager ，代码可以照抄，否则要改路径名称。
 
-解决办法：
-1️⃣ 确认宿主机文件类型
+#### 解决办法：
+确认宿主机文件类型
 ```bash
 ls -l /opt/stacks/node_sub_manager/access_token.txt
 file /opt/stacks/node_sub_manager/access_token.txt
