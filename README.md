@@ -118,7 +118,7 @@ docker exec -it node_sub_manager cat /app/access_token.txt
 ```bash
 rm -f /opt/stacks/node_sub_manager/access_token.txt
 ```
-3. 写入新的 token，自行更换
+3. 写入新的 token，token可以在命令里面自行修改
 ```bash
 echo "abc123xyz" > /opt/stacks/node_sub_manager/access_token.txt
 ```
