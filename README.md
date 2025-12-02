@@ -45,8 +45,12 @@ nano app.py
 
 订阅地址：`http://您的IP:5786/sub?token=“TOKEN”`
 
-token安装时候随机生成，并记录在access_token.txt，或者忘记token了，可以重新运行run.sh 再次显示token
-
+token安装时候随机生成，并记录在access_token.txt。
+查看token
+```bash
+TOKEN=$(cat /root/node_sub_manager/access_token.txt)
+echo "当前订阅 token: $TOKEN"
+```
 重启命令：
 ```bash
 systemctl restart node_sub
