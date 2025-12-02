@@ -1,16 +1,27 @@
 #!/bin/bash
-# run.sh - 使用系统 gunicorn 启动 Node Subscription Manager + systemd 保活
+# run.sh - 自动检测 gunicorn 路径 + systemd 启动 Node Subscription Manager
 
 APP_DIR="/root/node_sub_manager"
 SERVICE_FILE="/etc/systemd/system/node_sub.service"
 
-echo "=== 安装系统依赖 (gunicorn + pip) ==="
+echo "=== 安装依赖 ==="
 apt update -y
-apt install python3-pip python3-gunicorn -y
-pip install --no-cache-dir flask
+apt install -y python3-pip
+# 安装系统 gunicorn，如果已经存在不会重复安装
+apt install -y python3-gunicorn || true
+pip install --no-cache-dir flask || true
+
+# 检测 gunicorn 路径
+GUNICORN_PATH=$(which gunicorn)
+if [ -z "$GUNICORN_PATH" ]; then
+    echo "❌ 没找到 gunicorn，安装 pip 版本..."
+    pip install --no-cache-dir gunicorn
+    GUNICORN_PATH=$(which gunicorn)
+fi
+
+echo "gunicorn 路径: $GUNICORN_PATH"
 
 echo "=== 创建或覆盖 systemd 服务文件 ==="
-
 cat <<EOF > $SERVICE_FILE
 [Unit]
 Description=Node Subscription Manager
@@ -20,7 +31,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=$APP_DIR
-ExecStart=/usr/bin/gunicorn -b 0.0.0.0:5786 app:app
+ExecStart=$GUNICORN_PATH -b 0.0.0.0:5786 app:app
 Restart=always
 RestartSec=3
 User=root
