@@ -1,23 +1,29 @@
 #!/bin/bash
-# stop.sh - 停止 Node Subscription Manager 后台服务，并取消开机自启
+# stop.sh - 停止 Node Subscription Manager 服务，并取消开机自启
 
 SERVICE_NAME="node_sub"
-APP_DIR="/root/node_sub_manager"
-PID_FILE="$APP_DIR/node_sub.pid"
 
-# 停止 systemd 服务
-if systemctl list-units --all | grep -q "$SERVICE_NAME.service"; then
-    systemctl stop $SERVICE_NAME
-    systemctl disable $SERVICE_NAME
-    echo "服务已停止并取消开机自启 (systemd)"
+echo "=== 停止 systemd 服务 ==="
+systemctl stop $SERVICE_NAME
+
+echo "=== 取消开机自启 ==="
+systemctl disable $SERVICE_NAME
+
+echo "=== 强制杀掉残留 gunicorn 进程 ==="
+PIDS=$(ps aux | grep gunicorn | grep -v grep | awk '{print $2}')
+if [ -n "$PIDS" ]; then
+    echo "杀掉进程: $PIDS"
+    kill -9 $PIDS
+else
+    echo "没有找到运行中的 gunicorn 进程"
 fi
 
-# 如果还有 PID 文件，尝试杀掉 nohup 进程
-if [ -f "$PID_FILE" ]; then
-    PID=$(cat "$PID_FILE")
-    if ps -p $PID > /dev/null 2>&1; then
-        kill $PID
-        echo "后台进程已停止 (PID: $PID)"
-    fi
-    rm -f "$PID_FILE"
+echo "=== 删除 systemd 文件（可选） ==="
+SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME.service"
+if [ -f "$SERVICE_FILE" ]; then
+    rm -f $SERVICE_FILE
+    systemctl daemon-reload
+    echo "已删除 systemd 文件: $SERVICE_FILE"
 fi
+
+echo "=== Node Subscription Manager 已完全停止 ==="
