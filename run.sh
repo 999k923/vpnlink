@@ -1,13 +1,13 @@
 #!/bin/bash
-# run.sh - 使用 gunicorn 启动 Node Subscription Manager + systemd 保活
+# run.sh - 使用系统 gunicorn 启动 Node Subscription Manager + systemd 保活
 
 APP_DIR="/root/node_sub_manager"
 SERVICE_FILE="/etc/systemd/system/node_sub.service"
 
-echo "=== 安装依赖 (gunicorn) ==="
+echo "=== 安装系统依赖 (gunicorn + pip) ==="
 apt update -y
-apt install python3-pip -y
-pip install gunicorn flask
+apt install python3-pip python3-gunicorn -y
+pip install --no-cache-dir flask
 
 echo "=== 创建或覆盖 systemd 服务文件 ==="
 
